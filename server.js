@@ -39,6 +39,9 @@ fs.ensureDirSync(CERTS_DIR);
 // into the store. Never overwrites work already captured on this machine.
 function seedStore() {
   if (!process.pkg) return;   // in development the project folder IS the store
+  // Portable mode keeps the store in the program's own folder, so the files
+  // are already where they belong and copying would target itself.
+  if (path.resolve(APP_DIR) === path.resolve(STORE_DIR)) return;
   try {
     const seedList = path.join(APP_DIR, 'data', 'students.json');
     if (fs.existsSync(seedList) && !fs.existsSync(STUDENTS_FILE)) {
@@ -152,7 +155,37 @@ const upload = multer({
 });
 
 app.use(express.json());
-app.use(express.static(path.join(APP_DIR, 'public')));
+// Packaged, the web files are embedded in the program itself (__dirname points
+// inside it). A public folder placed next to the program still wins, so the
+// look can be changed without a rebuild.
+const EXTERNAL_PUBLIC = path.join(APP_DIR, 'public');
+const PUBLIC_DIR = fs.existsSync(EXTERNAL_PUBLIC) ? EXTERNAL_PUBLIC : path.join(__dirname, 'public');
+
+// Serves the web files. Deliberately not express.static: when embedded in the
+// packaged program the files live in a virtual filesystem that only
+// readFileSync can reach, which express.static does not use.
+const MIME = {
+  '.html': 'text/html; charset=utf-8',
+  '.js':   'text/javascript; charset=utf-8',
+  '.css':  'text/css; charset=utf-8',
+  '.svg':  'image/svg+xml',
+  '.png':  'image/png',
+  '.jpg':  'image/jpeg',
+  '.ico':  'image/x-icon'
+};
+
+app.use((req, res, next) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+  const rel = req.path === '/' ? 'index.html' : decodeURIComponent(req.path).replace(/^[\\/]+/, '');
+  const file = path.join(PUBLIC_DIR, rel);
+  // Never serve outside the web folder, whatever the request asks for.
+  if (!file.startsWith(PUBLIC_DIR + path.sep)) return next();
+  try {
+    if (!fs.existsSync(file) || !fs.statSync(file).isFile()) return next();
+    res.type(MIME[path.extname(file).toLowerCase()] || 'application/octet-stream');
+    res.send(fs.readFileSync(file));
+  } catch { next(); }
+});
 
 // API Routes
 

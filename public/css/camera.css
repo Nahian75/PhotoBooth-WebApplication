@@ -10,6 +10,9 @@ html,body{width:100%;height:100%;font-family:var(--font);background:#000;color:v
 .idle-title{font-size:26px;font-weight:700;color:var(--white)}
 .idle-sub{font-size:14px;color:var(--gray-400);max-width:260px;line-height:1.6}
 .idle-ring{width:40px;height:40px;border-radius:50%;border:2px solid var(--blue);animation:idlePulse 1.8s ease-in-out infinite;margin-top:6px}
+.idle-error{max-width:300px;margin-top:4px;padding:12px 14px;border-radius:10px;background:rgba(220,38,38,0.12);border:1px solid rgba(220,38,38,0.45);color:#fca5a5;font-size:13px;line-height:1.55;text-align:left}
+.idle-error b{color:#fecaca;display:block;margin-bottom:4px}
+.idle-error code{display:block;margin-top:6px;padding:6px 8px;border-radius:6px;background:rgba(0,0,0,0.35);color:#fff;font-size:12px;word-break:break-all}
 @keyframes idlePulse{0%,100%{transform:scale(0.85);opacity:0.4}50%{transform:scale(1.15);opacity:1}}
 
 /* Camera screen */

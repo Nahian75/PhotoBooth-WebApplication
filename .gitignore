@@ -12,6 +12,8 @@ data/certs/
 # ---- Build output -------------------------------------------------
 # Contains the compiled program AND a copy of the roster/photos
 dist/
+# Staging folder for the ready-to-run build on the main branch
+dist-main/
 
 # ---- Dependencies -------------------------------------------------
 node_modules/

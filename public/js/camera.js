@@ -14,6 +14,16 @@ let videoStream=null, isCapturing=false, qualityTimer=null;
 
 // ── Camera ────────────────────────────────────────────────────
 async function startCamera() {
+  // Browsers block the camera outright on a page whose certificate they do not
+  // trust, so say that plainly instead of letting it look like a dead screen.
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showCameraError(
+      '<b>Camera blocked by this phone</b>This page is not trusted yet, so the browser will not allow camera access. ' +
+      'Install the certificate once to fix it - open this address on the phone and install the file it downloads:' +
+      `<code>${location.origin}/cert.crt</code>`
+    );
+    return;
+  }
   try {
     videoStream = await navigator.mediaDevices.getUserMedia({
       video: {
@@ -25,14 +35,34 @@ async function startCamera() {
       },
       audio: false
     });
+    hideCameraError();
     $('videoFeed').srcObject = videoStream;
     await $('videoFeed').play();
     startQualityCheck();
     announceReady();
   } catch(e) {
     console.error('Camera error:', e);
-    $('instructionText').textContent = 'Camera permission denied. Please allow camera access.';
+    if (e.name === 'NotAllowedError') {
+      showCameraError('<b>Camera permission denied</b>Allow camera access for this page, then reload. If no prompt appeared, the page is not trusted - install the certificate from ' + `<code>${location.origin}/cert.crt</code>`);
+    } else if (e.name === 'NotFoundError' || e.name === 'OverconstrainedError') {
+      showCameraError('<b>No camera found</b>This device did not report a usable camera.');
+    } else {
+      showCameraError(`<b>Camera could not start</b>${e.name || 'Unknown error'}. Close other apps using the camera and reload.`);
+    }
   }
+}
+
+// Shown on the waiting screen, which is what is actually on-screen when the
+// camera fails to start.
+function showCameraError(html) {
+  const el = $('cameraError');
+  if (el) { el.innerHTML = html; el.classList.remove('hidden'); }
+  $('idleRing')?.classList.add('hidden');
+  $('instructionText').textContent = el ? el.textContent : 'Camera unavailable';
+}
+function hideCameraError() {
+  $('cameraError')?.classList.add('hidden');
+  $('idleRing')?.classList.remove('hidden');
 }
 
 function announceReady() {
