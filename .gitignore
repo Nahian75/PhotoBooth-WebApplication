@@ -1,0 +1,4 @@
+# Anything the program creates while running stays out of the repository.
+# These hold student personal data, face photos and the HTTPS private key.
+data/
+photos/
