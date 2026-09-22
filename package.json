@@ -1,0 +1,21 @@
+{
+  "name": "student-photo-capture",
+  "version": "1.0.0",
+  "description": "Passport-office-style student face photo capture system",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "fs-extra": "^11.2.0",
+    "multer": "^1.4.5-lts.1",
+    "qrcode": "^1.5.4",
+    "selfsigned": "^5.5.0",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}

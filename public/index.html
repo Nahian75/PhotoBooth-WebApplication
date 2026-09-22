@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PhotoBooth — Dashboard</title>
+  <meta name="description" content="PhotoBooth student face photo capture dashboard." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/dashboard.css" />
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="navbar-left">
+      <span class="brand">PhotoBooth</span>
+    </div>
+    <div class="navbar-center">
+      <div class="progress-wrap">
+        <span class="progress-label" id="progressText">Loading...</span>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill" style="width:0%"></div>
+        </div>
+        <span class="progress-pct" id="progressPct">0%</span>
+      </div>
+    </div>
+    <div class="navbar-right" style="display:flex; align-items:center; gap:12px;">
+      <!-- Webcam selector (also acts as on/off) -->
+      <select id="cameraSelect" class="cam-select" title="PC Webcam"></select>
+      
+      <!-- Phone connect / status button -->
+      <button class="btn-outline" id="btnQR" style="display:flex; align-items:center; gap:8px; padding: 6px 12px;">
+        <span class="device-dot" id="phoneDot"></span>
+        <span id="phoneStatusText">Connect Phone</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-top">
+        <div class="sidebar-top-row">
+          <div class="search-wrap">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="searchInput" placeholder="Search name or ID..." autocomplete="off" />
+            <button id="searchClear" class="search-clear">&#10005;</button>
+          </div>
+          <button class="btn-add" id="btnAddStudent" title="Add student">+ Add</button>
+        </div>
+        <div class="filter-row">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="pending">Pending</button>
+          <button class="filter-btn" data-filter="completed">Completed</button>
+        </div>
+        <p class="list-meta" id="listMeta"></p>
+      </div>
+      <div class="student-list" id="studentList">
+        <div class="list-loading">Loading...</div>
+      </div>
+    </aside>
+
+    <!-- Detail panel -->
+    <section class="detail">
+
+      <!-- Empty state -->
+      <div class="empty-state" id="emptyState">
+        <p class="empty-title">Select a student</p>
+        <p class="empty-sub">Choose a student from the list to begin capturing photos.</p>
+      </div>
+
+      <!-- Student detail -->
+      <div class="student-detail hidden" id="studentDetail">
+
+        <!-- Student info header -->
+        <div class="detail-header">
+          <div class="detail-avatar" id="detailAvatar"></div>
+          <div class="detail-info">
+            <h1 class="detail-name" id="detailName"></h1>
+            <div class="detail-row">
+              <span class="id-tag" id="detailId"></span>
+              <span class="dept-tag" id="detailDept"></span>
+              <span class="year-tag" id="detailYear"></span>
+            </div>
+            <div class="detail-extras">
+              <span id="detailDob"></span>
+              <span id="detailEmail"></span>
+              <span id="detailPhone"></span>
+            </div>
+          </div>
+          <div class="status-badge" id="detailStatusBadge">
+            <span id="detailStatusText">PENDING</span>
+          </div>
+          <button class="btn-danger" id="btnDeleteStudent" title="Delete student">Delete</button>
+        </div>
+
+        <!-- Capture zone: webcam + angle grid side by side -->
+        <div class="capture-zone">
+
+          <!-- Webcam panel -->
+          <div class="webcam-panel" id="webcamPanel">
+            <div class="webcam-header">
+              <span class="panel-title">Capture</span>
+              <div class="webcam-controls-row">
+                <div class="quality-pill" id="qualityPill">
+                  <span class="quality-dot" id="qualityDot"></span>
+                  <span id="qualityLabel">Ready</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Viewfinder -->
+            <div class="viewfinder-box" id="viewfinderBox">
+              <!-- No webcam state -->
+              <div class="no-webcam" id="noWebcam">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M8 2h8l2 4H6z"/><rect x="2" y="6" width="20" height="14" rx="2"/></svg>
+                <p>No webcam detected</p>
+                <p class="hint">Plug in a USB webcam — it will appear automatically.<br/>Or use <strong>Connect Phone</strong> to use your phone camera.</p>
+              </div>
+
+              <!-- Video feed -->
+              <video id="webcamFeed" autoplay playsinline muted class="hidden"></video>
+
+              <!-- Phone camera feed (live frames relayed over the socket) -->
+              <img id="phoneFeed" class="hidden" alt="Phone camera preview" />
+              <span class="source-tag hidden" id="phoneSourceTag">PHONE</span>
+
+              <!-- Oval overlay -->
+              <div class="oval-overlay hidden" id="ovalOverlay">
+                <svg class="oval-svg" viewBox="0 0 100 130" preserveAspectRatio="none">
+                  <defs>
+                    <mask id="om">
+                      <rect width="100" height="130" fill="white"/>
+                      <ellipse cx="50" cy="58" rx="33" ry="43" fill="black"/>
+                    </mask>
+                  </defs>
+                  <rect width="100" height="130" fill="rgba(0,0,0,0.35)" mask="url(#om)"/>
+                  <ellipse cx="50" cy="58" rx="33" ry="43" fill="none" stroke="white" stroke-width="0.7" id="ovalRingEl"/>
+                  <path d="M17,43 L17,33 Q17,27 23,27 L31,27" fill="none" stroke="white" stroke-width="0.9" stroke-linecap="round" opacity="0.5"/>
+                  <path d="M83,43 L83,33 Q83,27 77,27 L69,27" fill="none" stroke="white" stroke-width="0.9" stroke-linecap="round" opacity="0.5"/>
+                  <path d="M17,73 L17,83 Q17,89 23,89 L31,89" fill="none" stroke="white" stroke-width="0.9" stroke-linecap="round" opacity="0.5"/>
+                  <path d="M83,73 L83,83 Q83,89 77,89 L69,89" fill="none" stroke="white" stroke-width="0.9" stroke-linecap="round" opacity="0.5"/>
+                </svg>
+                <div class="angle-arrow" id="angleArrow"></div>
+                <div class="angle-tag-overlay" id="angleTagOverlay">FRONT</div>
+              </div>
+            </div>
+
+            <!-- Angle selector pills -->
+            <div class="angle-pills-row" id="anglePillsRow"></div>
+
+            <!-- Instruction + capture button -->
+            <div class="capture-row">
+              <p class="capture-instruction" id="captureInstruction">Look straight ahead</p>
+              <button class="btn-capture" id="btnCapture" disabled>Capture</button>
+            </div>
+          </div>
+
+          <!-- Angle photos grid -->
+          <div class="angles-panel">
+            <div class="angles-header">
+              <span class="panel-title">Photos</span>
+              <span class="angle-count" id="angleCount">0 / 5</span>
+            </div>
+            <div class="angle-bar">
+              <div class="angle-bar-fill" id="angleBarFill" style="width:0%"></div>
+            </div>
+            <div class="angles-grid" id="anglesGrid"></div>
+            <div class="action-bar">
+              <p class="action-note" id="actionText">Connect a webcam or phone to begin.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Add Student Modal -->
+  <div class="modal-overlay hidden" id="addStudentModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>Add Student</h2>
+        <button class="modal-close" id="addStudentClose">&#10005;</button>
+      </div>
+      <form class="modal-body" id="addStudentForm">
+        <div class="form-field">
+          <label for="newStudentId">Student ID *</label>
+          <input type="text" id="newStudentId" required autocomplete="off" />
+        </div>
+        <div class="form-field">
+          <label for="newStudentName">Full Name *</label>
+          <input type="text" id="newStudentName" required autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="newStudentPhone">Phone</label>
+            <input type="text" id="newStudentPhone" autocomplete="off" />
+          </div>
+          <div class="form-field">
+            <label for="newStudentEmail">Email</label>
+            <input type="email" id="newStudentEmail" autocomplete="off" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="newStudentDept">Department</label>
+            <input type="text" id="newStudentDept" autocomplete="off" value="Spark Education" />
+          </div>
+          <div class="form-field">
+            <label for="newStudentYear">Year</label>
+            <input type="text" id="newStudentYear" autocomplete="off" placeholder="e.g. 2026" />
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="newStudentDob">Date of Birth</label>
+          <input type="date" id="newStudentDob" autocomplete="off" />
+        </div>
+        <p class="form-error hidden" id="addStudentError"></p>
+        <button type="submit" class="btn-capture" id="addStudentSubmit">Add Student</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- QR Modal -->
+  <div class="modal-overlay hidden" id="qrModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>Connect Phone</h2>
+        <button class="modal-close" id="qrClose">&#10005;</button>
+      </div>
+      <div class="modal-body">
+        <p>Scan the QR code with your phone. Both devices must be on the same WiFi network.</p>
+        <div class="qr-box" id="qrContainer"><div class="spinner"></div></div>
+        <p class="qr-url" id="qrUrl"></p>
+        <ol class="qr-steps">
+          <li>Scan QR code with phone camera app</li>
+          <li>Allow camera permission when prompted</li>
+          <li>Select a student here — phone switches automatically</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flash overlay -->
+  <div class="capture-flash" id="captureFlash"></div>
+
+  <!-- Toast -->
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <canvas id="captureCanvas" style="display:none;"></canvas>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>

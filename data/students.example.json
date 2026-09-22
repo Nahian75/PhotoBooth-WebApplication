@@ -1,0 +1,11 @@
+[
+  {
+    "id": "003-26-0001",
+    "name": "Example Student",
+    "phone": "01700000000",
+    "email": "example@school.edu",
+    "department": "Spark Education",
+    "year": "2026",
+    "dob": "2010-01-01"
+  }
+]

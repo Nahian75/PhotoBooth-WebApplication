@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>PhotoBooth — Camera</title>
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/camera.css" />
+</head>
+<body>
+
+  <!-- Waiting screen -->
+  <div class="idle-screen" id="idleScreen">
+    <div class="idle-box">
+      <p class="idle-brand">PhotoBooth</p>
+      <p class="idle-title">Camera Ready</p>
+      <p class="idle-sub">Please select a student from the PC dashboard to begin capturing photos.</p>
+      <div class="idle-ring"></div>
+    </div>
+  </div>
+
+  <!-- Camera screen -->
+  <div class="camera-screen hidden" id="cameraScreen">
+
+    <!-- Top bar -->
+    <div class="top-bar" id="topBar">
+      <div class="student-info">
+        <span class="student-id" id="chipStudentId"></span>
+        <span class="student-name" id="chipStudentName"></span>
+      </div>
+      <div class="angle-pills" id="anglePills"></div>
+    </div>
+
+    <!-- Viewfinder -->
+    <div class="viewfinder" id="viewfinder">
+      <video id="videoFeed" autoplay playsinline muted></video>
+
+      <div class="face-overlay">
+        <svg class="oval-svg" viewBox="0 0 100 130" preserveAspectRatio="none">
+          <defs>
+            <mask id="m">
+              <rect width="100" height="130" fill="white"/>
+              <ellipse cx="50" cy="58" rx="34" ry="44" fill="black"/>
+            </mask>
+          </defs>
+          <rect width="100" height="130" fill="rgba(0,0,0,0.4)" mask="url(#m)"/>
+          <ellipse cx="50" cy="58" rx="34" ry="44" fill="none" stroke="white" stroke-width="0.6" id="ovalRing"/>
+          <!-- corner marks -->
+          <path d="M16,42 L16,32 Q16,26 22,26 L30,26" fill="none" stroke="white" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+          <path d="M84,42 L84,32 Q84,26 78,26 L70,26" fill="none" stroke="white" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+          <path d="M16,74 L16,84 Q16,90 22,90 L30,90" fill="none" stroke="white" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+          <path d="M84,74 L84,84 Q84,90 78,90 L70,90" fill="none" stroke="white" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+        </svg>
+        <div class="direction-indicator" id="directionIndicator"></div>
+        <div class="angle-tag" id="angleTag">FRONT</div>
+      </div>
+
+      <!-- Quality pill -->
+      <div class="quality-pill" id="qualityPill">
+        <span class="quality-dot" id="qualityDot"></span>
+        <span id="qualityLabel">Checking</span>
+      </div>
+    </div>
+
+    <!-- Instruction -->
+    <div class="instruction-bar">
+      <p id="instructionText">Look straight ahead at the camera</p>
+    </div>
+
+    <!-- Bottom controls -->
+    <div class="bottom-bar">
+      <div class="progress-info">
+        <span id="progressLabel">0 / 5</span>
+        <div class="progress-dots" id="progressDots"></div>
+      </div>
+
+      <button class="shutter" id="captureBtn" aria-label="Capture photo">
+        <div class="shutter-inner"></div>
+      </button>
+
+      <div class="nav-btns">
+        <button class="nav-btn" id="btnPrev">&#8249;</button>
+        <button class="nav-btn" id="btnNext">&#8250;</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Flash -->
+  <div class="flash" id="flash"></div>
+
+  <!-- Status card -->
+  <div class="status-overlay hidden" id="statusOverlay">
+    <div class="status-card">
+      <p class="status-msg" id="statusMsg">Saving...</p>
+    </div>
+  </div>
+
+  <!-- Blur warning -->
+  <div class="blur-bar hidden" id="blurBar">
+    <span>Image is blurry — hold steady and try again.</span>
+    <button id="blurDismiss">Retake</button>
+  </div>
+
+  <canvas id="captureCanvas" style="display:none;"></canvas>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/camera.js"></script>
+</body>
+</html>

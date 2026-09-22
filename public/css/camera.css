@@ -1,0 +1,82 @@
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--font:'Inter',system-ui,sans-serif;--white:#fff;--gray-100:#f3f4f6;--gray-200:#e5e7eb;--gray-400:#9ca3af;--gray-500:#6b7280;--blue:#2563eb;--green:#16a34a;--red:#dc2626;--amber:#d97706}
+html,body{width:100%;height:100%;font-family:var(--font);background:#000;color:var(--white);overflow:hidden;-webkit-font-smoothing:antialiased;touch-action:manipulation}
+.hidden{display:none!important}
+
+/* Idle */
+.idle-screen{position:fixed;inset:0;background:#0f172a;display:flex;align-items:center;justify-content:center;z-index:10}
+.idle-box{text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;padding:40px 24px}
+.idle-brand{font-size:13px;font-weight:700;letter-spacing:2px;color:var(--gray-400);text-transform:uppercase}
+.idle-title{font-size:26px;font-weight:700;color:var(--white)}
+.idle-sub{font-size:14px;color:var(--gray-400);max-width:260px;line-height:1.6}
+.idle-ring{width:40px;height:40px;border-radius:50%;border:2px solid var(--blue);animation:idlePulse 1.8s ease-in-out infinite;margin-top:6px}
+@keyframes idlePulse{0%,100%{transform:scale(0.85);opacity:0.4}50%{transform:scale(1.15);opacity:1}}
+
+/* Camera screen */
+.camera-screen{position:fixed;inset:0;display:flex;flex-direction:column;background:#000}
+
+/* Top bar */
+.top-bar{position:absolute;top:0;left:0;right:0;z-index:20;padding:40px 14px 10px;background:linear-gradient(to bottom,rgba(0,0,0,0.75),transparent)}
+.student-info{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.student-id{padding:2px 9px;border-radius:99px;background:var(--blue);font-size:11px;font-weight:700;color:var(--white)}
+.student-name{font-size:13px;font-weight:600;color:var(--white);text-shadow:0 1px 6px rgba(0,0,0,0.7)}
+.angle-pills{display:flex;gap:5px;flex-wrap:wrap}
+.angle-pill{padding:4px 11px;border-radius:99px;font-size:11px;font-weight:600;letter-spacing:0.3px;text-transform:uppercase;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.4);color:rgba(255,255,255,0.5);cursor:pointer;transition:all 0.15s;backdrop-filter:blur(4px)}
+.angle-pill.active{background:var(--blue);border-color:var(--blue);color:var(--white)}
+.angle-pill.done{border-color:rgba(74,222,128,0.5);color:#4ade80}
+.angle-pill.done.active{background:var(--blue);border-color:var(--blue);color:var(--white)}
+
+/* Viewfinder */
+.viewfinder{flex:1;position:relative;overflow:hidden;background:#000}
+#videoFeed{width:100%;height:100%;object-fit:cover}
+
+/* Face overlay */
+.face-overlay{position:absolute;inset:0;pointer-events:none}
+.oval-svg{position:absolute;inset:0;width:100%;height:100%}
+.direction-indicator{position:absolute;font-size:32px;font-weight:700;color:var(--white);text-shadow:0 1px 8px rgba(0,0,0,0.7);transition:all 0.25s;transform:translate(-50%,-50%)}
+.angle-tag{position:absolute;bottom:18%;left:50%;transform:translateX(-50%);font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--white);background:rgba(0,0,0,0.4);padding:3px 14px;border-radius:99px;backdrop-filter:blur(4px)}
+
+/* Quality */
+.quality-pill{position:absolute;top:10px;right:10px;display:flex;align-items:center;gap:5px;background:rgba(0,0,0,0.55);padding:4px 10px;border-radius:99px;backdrop-filter:blur(6px);font-size:11px;font-weight:600;color:rgba(255,255,255,0.7)}
+.quality-dot{width:7px;height:7px;border-radius:50%;background:var(--amber);transition:background 0.3s}
+.quality-dot.good{background:var(--green)}
+.quality-dot.bad{background:var(--red)}
+
+/* Instruction */
+.instruction-bar{background:rgba(0,0,0,0.75);backdrop-filter:blur(10px);padding:12px 18px;text-align:center;border-top:1px solid rgba(255,255,255,0.08)}
+#instructionText{font-size:14px;font-weight:500;color:rgba(255,255,255,0.9)}
+
+/* Bottom bar */
+.bottom-bar{background:rgba(0,0,0,0.9);backdrop-filter:blur(14px);padding:14px 28px 30px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid rgba(255,255,255,0.07)}
+.progress-info{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:52px}
+#progressLabel{font-size:12px;font-weight:600;color:var(--gray-400)}
+.progress-dots{display:flex;gap:4px}
+.p-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.15);transition:all 0.2s}
+.p-dot.done{background:var(--green)}
+.p-dot.cur{background:var(--blue);transform:scale(1.3)}
+
+/* Shutter button */
+.shutter{width:70px;height:70px;border-radius:50%;background:none;border:3px solid rgba(255,255,255,0.75);cursor:pointer;padding:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:border-color 0.15s;-webkit-tap-highlight-color:transparent}
+.shutter:active{transform:scale(0.93)}
+.shutter:disabled{opacity:0.35;cursor:not-allowed}
+.shutter-inner{width:100%;height:100%;border-radius:50%;background:var(--white);transition:all 0.12s}
+.shutter:active .shutter-inner{transform:scale(0.88)}
+
+/* Nav buttons */
+.nav-btns{display:flex;gap:6px;min-width:52px;justify-content:flex-end}
+.nav-btn{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:var(--white);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;-webkit-tap-highlight-color:transparent}
+.nav-btn:active{background:rgba(255,255,255,0.2);transform:scale(0.9)}
+
+/* Flash */
+.flash{position:fixed;inset:0;z-index:50;background:var(--white);opacity:0;pointer-events:none;transition:opacity 0.08s}
+.flash.on{opacity:0.8}
+
+/* Status overlay */
+.status-overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);backdrop-filter:blur(6px)}
+.status-card{background:rgba(15,23,42,0.96);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:28px 36px;text-align:center;min-width:180px;box-shadow:0 8px 40px rgba(0,0,0,0.5)}
+.status-msg{font-size:15px;font-weight:600;color:var(--white)}
+
+/* Blur warning */
+.blur-bar{position:fixed;bottom:110px;left:12px;right:12px;z-index:70;background:rgba(220,38,38,0.12);border:1px solid rgba(220,38,38,0.4);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;backdrop-filter:blur(12px)}
+.blur-bar span{font-size:13px;color:#fca5a5;flex:1;font-weight:500}
+.blur-bar button{padding:6px 14px;border-radius:99px;background:rgba(220,38,38,0.25);border:1px solid rgba(220,38,38,0.4);color:#fca5a5;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font)}
