@@ -15,6 +15,12 @@ dist/
 # Staging folder for the ready-to-run build on the main branch
 dist-main/
 
+# ---- Live working copies ------------------------------------------
+# A running install keeps the roster, photos and private key inside it.
+# Match any folder holding a built program, wherever it is put.
+Spark Ready Photobooth/
+**/PhotoBooth.exe
+
 # ---- Dependencies -------------------------------------------------
 node_modules/
 

@@ -9,7 +9,10 @@
   },
   "bin": "server.js",
   "pkg": {
-    "assets": ["public/**/*"]
+    "assets": [
+      "public/**/*",
+      "node_modules/socket.io/client-dist/**/*"
+    ]
   },
   "dependencies": {
     "express": "^4.19.2",

@@ -183,6 +183,9 @@ app.use((req, res, next) => {
   try {
     if (!fs.existsSync(file) || !fs.statSync(file).isFile()) return next();
     res.type(MIME[path.extname(file).toLowerCase()] || 'application/octet-stream');
+    // Never let a browser reuse an old copy: a stale script paired with a new
+    // page produces a dashboard that silently does nothing.
+    res.setHeader('Cache-Control', 'no-store, must-revalidate');
     res.send(fs.readFileSync(file));
   } catch { next(); }
 });

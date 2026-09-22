@@ -33,7 +33,9 @@ const mediaDevices = navigator.mediaDevices || null;
 
 // ── Init ───────────────────────────────────────────────────────────────────────
 async function init() {
-  await loadStudents();
+  // Loading students must never stop the rest of the page from starting,
+  // or a stalled request leaves the whole dashboard dead.
+  try { await loadStudents(); } catch (e) { console.error('loadStudents failed:', e); }
   setupListeners();   // Always runs — no dependency on camera APIs
   initWebcam();       // Best-effort, errors are caught internally
 }
@@ -41,11 +43,21 @@ async function init() {
 // ── Students ───────────────────────────────────────────────────────────────────
 async function loadStudents() {
   try {
-    const res = await fetch('/api/students');
+    // A request that never answers would otherwise leave "Loading..." on
+    // screen forever and stop the rest of the page from starting.
+    const res = await fetch('/api/students', { cache: 'no-store', signal: AbortSignal.timeout(8000) });
     allStudents = await res.json();
     applyFilter();
     updateProgress();
-  } catch { showToast('Failed to load students', 'error'); }
+  } catch {
+    // Leaving "Loading..." on screen reads as still working, when in fact the
+    // server is gone — usually because its window was closed.
+    $('studentList').innerHTML =
+      '<div class="no-results">Cannot reach the server.<br/><br/>' +
+      'It may have been closed. Start it again with START.bat,<br/>then reload this page.</div>';
+    $('progressText').textContent = 'Server not running';
+    showToast('Cannot reach the server', 'error');
+  }
 }
 
 function applyFilter() {
