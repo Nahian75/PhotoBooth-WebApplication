@@ -1,153 +1,195 @@
-# Student Face Photo Capture System 
- 
-A passport-office-style web app for capturing original-quality student face photos 
-using a phone camera, managed from a PC dashboard over local WiFi. 
- 
---- 
- 
-## Features 
- 
-- Preloaded student database (100 students: name, ID, dept, year, DOB, email, phone) 
-- Live progress tracking (e.g. 45 / 100 completed) 
-- Phone connects as camera via QR code, no app install needed 
-- 6 required face angles: Front, Right, Left, Up, Down, Center 
-- Face-positioning guide overlay shown for each angle 
-- Blur detection: rejects blurry photos before saving 
-- Original quality: full native phone camera resolution, JPEG quality=1.0 
-- Auto folder per student named by student ID 
-- Real-time sync: dashboard updates the instant phone saves a photo 
-- Search and filter by name, ID, department; filter Pending / Completed 
-- Retake any angle without losing other captured photos 
-- Student only marked Completed when all 6 photos are confirmed on disk 
- 
---- 
- 
-## How It Works 
- 
-  PC Browser (Dashboard)  WebSocket  Phone Browser (Camera) 
-         connected via Express Server on Port 3000 
-         Photos saved to: photos/STU001/front.jpg, right.jpg ... 
- 
-1. Run the server on your PC 
-2. Open the dashboard in a PC browser at http://localhost:3000 
-3. Click Connect Phone, scan the QR code with your phone 
-4. Select a student on PC, phone auto-loads that student 
-5. Capture 6 angle photos on the phone 
-6. Photos save at full resolution to photos/student_id/ 
-7. Dashboard marks student Completed automatically 
- 
---- 
- 
-## Project Structure 
- 
-  webapp/ 
-  README.md              (You are here) 
-  BLUEPRINT.md           (Full technical pipeline reference) 
-  package.json           (Node.js dependencies) 
-  server.js              (Express + Socket.io server) 
-  data/ 
-    students.json        (Student database - edit to add real students) 
-  photos/                (Auto-created. One subfolder per student.) 
-    STU001/ 
-      front.jpg 
-      right.jpg 
-      left.jpg 
-      up.jpg 
-      down.jpg 
-      center.jpg 
-  public/ 
-    index.html           (PC Dashboard) 
-    camera.html          (Phone Camera view) 
-    css/ 
-      dashboard.css 
-      camera.css 
-    js/ 
-      dashboard.js 
-      camera.js 
- 
---- 
- 
-## Quick Start 
- 
-Step 1: Install Node.js 
-  Download from https://nodejs.org (LTS version) 
-  Install it, then restart your terminal. 
- 
-Step 2: Install dependencies 
-  cd D:\projects\webapp 
-  npm install 
- 
-Step 3: Start the server 
-  npm start 
- 
-  You will see: 
-  Dashboard : http://localhost:3000 
-  Phone URL : http://192.168.x.x:3000/camera.html 
- 
-Step 4: Open http://localhost:3000 in your PC browser 
- 
-Step 5: Click Connect Phone, scan QR code with phone 
-  Phone and PC must be on the SAME WiFi network. 
- 
---- 
- 
-## Face Angles 
- 
-  Front   - Look straight ahead at the camera 
-  Right   - Turn head to the right 
-  Left    - Turn head to the left 
-  Up      - Tilt head slightly upward 
-  Down    - Tilt head slightly downward 
-  Center  - Natural posture, slight chin down 
- 
---- 
- 
-## Student Database 
- 
-Edit data/students.json to add your real students. 
-Each record needs: id, name, department, year, gender, dob, phone, email 
-The id field is used as the photo folder name. Keep it unique. 
- 
---- 
- 
-## Photo Quality 
- 
-  Resolution : Full native phone camera resolution (e.g. 4000x3000 for 12MP) 
-  Format     : JPEG at quality=1.0 (maximum, no added compression) 
-  Blur gate  : Photos rejected if Laplacian variance score is below threshold 
-  Storage    : Raw bytes written directly to disk, no server-side re-encoding 
- 
---- 
- 
-## API Endpoints 
- 
-  GET    /api/students           All students with completion status 
-  GET    /api/students/:id        Single student 
-  GET    /api/photos/:id/:angle   Serve a captured photo 
-  POST   /api/photo              Upload a photo (multipart) 
-  DELETE /api/photos/:id/:angle  Delete a photo for retake 
-  GET    /api/qrcode             QR code PNG for phone pairing 
-  GET    /api/stats              Overall completion stats 
- 
---- 
- 
-## Dependencies 
- 
-  express    - HTTP server and static files 
-  socket.io  - Real-time WebSocket events 
-  multer     - Multipart photo upload handling 
-  fs-extra   - Filesystem operations 
-  qrcode     - QR code generation 
- 
---- 
- 
-## Full Technical Reference 
- 
-See BLUEPRINT.md for complete pipeline documentation including: 
-  - Architecture diagram 
-  - WebSocket event map 
-  - Photo pipeline and quality math 
-  - Blur detection algorithm (Laplacian variance) 
-  - Completion state machine 
-  - Safety and data integrity mechanisms 
-  - Extension points for future upgrades
+# Student Face Photo Capture System
+
+A web app for capturing full-resolution student face photos using a phone as the
+camera, driven from a PC dashboard over local WiFi. No app install on the phone —
+it runs in the browser.
+
+---
+
+## Two ways to get it
+
+**Just want to run it** — use the [`main`](../../tree/main) branch. It holds a
+ready-to-run Windows build: download, double-click `START.bat`, done. Nothing to
+install, no Node.js needed.
+
+**Want the source** — you are on it (`source-code`). Instructions below.
+
+---
+
+## Features
+
+- Student roster with live progress tracking
+- Phone pairs as the camera by scanning a QR code
+- 5 face angles: Front, Right, Left, Up, Down
+- Live view of the phone's camera on the PC dashboard
+- Capture from the PC button or the phone shutter
+- Full native camera resolution, JPEG quality 1.0, no re-encoding
+- Blur detection rejects unsharp photos before saving
+- One folder per student, named `Student Name (ID)`
+- Retake any angle at any time, including after all five are captured
+- Add and delete students from the dashboard
+- Search and filter by name, ID or department; Pending / Completed filters
+- Completion is derived from the photos on disk, never a manual flag
+
+---
+
+## How it works
+
+```
+PC browser (dashboard)  ←— Socket.io over HTTPS —→  phone browser (camera)
+                    Express server on port 3000
+```
+
+1. Start the server on the PC
+2. Open the dashboard, click **Connect Phone**, scan the QR code
+3. Pick a student on the PC — the phone follows automatically
+4. Capture the five angles
+5. The dashboard updates the moment each photo is saved
+
+The phone sends a small live preview to the dashboard several times a second so
+the operator can see framing. Captures are taken on the phone at full sensor
+resolution, so the preview never limits photo quality.
+
+---
+
+## Quick start (from source)
+
+```bash
+npm install
+npm start
+```
+
+You will see:
+
+```
+Dashboard : https://localhost:3000
+Phone URL : https://192.168.x.x:3000/camera.html
+```
+
+Phone and PC must be on the **same WiFi network**.
+
+On Windows, `START.bat` does all of this in one step and also handles the
+firewall rule and certificate trust described below.
+
+---
+
+## HTTPS is required
+
+Browsers only allow camera access on a secure origin, so the server runs over
+HTTPS. On first start it generates a self-signed certificate covering
+`localhost` and the machine's current LAN address, cached under `data/certs`.
+If the machine's address changes, the certificate is rebuilt on the next start.
+
+Because the certificate is self-signed, it is not trusted until installed:
+
+- **On the PC** — `START.bat` installs it into the Windows trusted store
+  automatically (one admin prompt on first run).
+- **On the phone** — open `https://<lan-ip>:3000/cert.crt` and install it as a
+  **CA certificate**. Until then the browser blocks camera access, and the
+  camera page will say so.
+
+`START.bat` also adds a firewall rule for port 3000 so phones can reach the PC.
+
+---
+
+## Where photos are saved
+
+```
+photos/Student Name (ID)/front.jpg  right.jpg  left.jpg  up.jpg  down.jpg
+```
+
+Running from source, that is inside the project folder. In the packaged build
+it is `Documents\PhotoBooth`, so photos do not depend on where the program was
+copied to.
+
+Set `PHOTOBOOTH_HOME` to override the location — useful for a shared drive.
+Placing a file named `PORTABLE.txt` next to the program keeps everything in the
+program's own folder instead, so a USB stick carries the work with it.
+
+---
+
+## Student roster
+
+`data/students.json` — an array of records:
+
+```json
+{
+  "id": "003-26-0001",
+  "name": "Example Student",
+  "phone": "01700000000",
+  "email": "example@school.edu",
+  "department": "Spark Education",
+  "year": "2026",
+  "dob": "2010-01-01"
+}
+```
+
+Only `id` and `name` are required; `id` must be unique. See
+`data/students.example.json`. Students can also be added from the dashboard.
+
+The real roster is deliberately not committed — it holds personal data.
+
+---
+
+## Photo quality
+
+| | |
+|---|---|
+| Resolution | the camera's maximum (e.g. 3024×4032 on a 12 MP phone) |
+| Format | JPEG, quality 1.0 |
+| Blur gate | rejected below a Laplacian variance threshold |
+| Storage | the uploaded bytes are written straight to disk, never re-encoded |
+
+---
+
+## API
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/api/students` | all students with completion status |
+| `GET` | `/api/students/:id` | one student |
+| `POST` | `/api/students` | add a student |
+| `DELETE` | `/api/students/:id` | remove a student and their photos |
+| `GET` | `/api/photos/:id/:angle` | serve a captured photo |
+| `POST` | `/api/photo` | upload a photo (multipart) |
+| `DELETE` | `/api/photos/:id/:angle` | delete one photo, for a retake |
+| `GET` | `/api/qrcode` | QR code for phone pairing |
+| `GET` | `/api/info` | address, port and angle list |
+| `GET` | `/cert.crt` | the certificate, for installing on a phone |
+
+### Socket events
+
+**Dashboard → server:** `select-student`, `capture-request`
+
+**Phone → server:** `camera-ready`, `preview-frame`, `capture-failed`
+
+**Server → clients:** `student-selected`, `student-updated`, `student-deleted`,
+`photo-saved`, `photo-deleted`, `camera-ready`, `camera-disconnected`
+
+---
+
+## Building the Windows executable
+
+```bash
+npm install --no-save pkg terser
+node node_modules/pkg/lib-es5/bin.js . --targets node18-win-x64 --output dist/PhotoBooth.exe
+```
+
+The web files and the socket.io browser client are bundled inside the
+executable, so it runs on its own. A `public` folder placed beside the program
+overrides the embedded copy, which is handy for tweaking the interface without
+rebuilding.
+
+---
+
+## Dependencies
+
+`express`, `socket.io`, `multer`, `fs-extra`, `qrcode`, `selfsigned`
+
+---
+
+## Technical reference
+
+`BLUEPRINT.md` covers the architecture, photo pipeline, blur detection and
+completion model in more depth. Note that parts of it predate the current
+version.
