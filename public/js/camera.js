@@ -3,8 +3,10 @@ const socket = io();
 
 const ANGLES = ['front','right','left','up','down'];
 const ANGLE_LABELS = {front:'Front',right:'Right',left:'Left',up:'Up',down:'Down'};
-const ANGLE_INSTR  = {front:'Look straight ahead at the camera',right:'Turn head to the right',left:'Turn head to the left',up:'Tilt head slightly upward',down:'Tilt head slightly downward'};
-const ARROWS = {front:{t:'',top:'50%',left:'50%'},right:{t:'→',top:'50%',left:'78%'},left:{t:'←',top:'50%',left:'18%'},up:{t:'↑',top:'12%',left:'50%'},down:{t:'↓',top:'82%',left:'50%'}};
+const ANGLE_INSTR  = {front:'Look straight ahead at the camera',right:'Student turns to THEIR right',left:'Student turns to THEIR left',up:'Tilt head slightly upward',down:'Tilt head slightly downward'};
+// Arrows mark where the face lands on screen. Turning to your own right moves
+// you toward the left of the picture, and this rear camera is never mirrored.
+const ARROWS = {front:{t:'',top:'50%',left:'50%'},right:{t:'←',top:'50%',left:'18%'},left:{t:'→',top:'50%',left:'78%'},up:{t:'↑',top:'12%',left:'50%'},down:{t:'↓',top:'82%',left:'50%'}};
 const BLUR_THRESHOLD = 80;
 
 const $ = id => document.getElementById(id);

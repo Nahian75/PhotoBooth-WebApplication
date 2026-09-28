@@ -6,15 +6,18 @@ const ANGLES = ['front', 'right', 'left', 'up', 'down'];
 const ANGLE_LABELS = { front:'Front', right:'Right', left:'Left', up:'Up', down:'Down' };
 const ANGLE_INSTR  = {
   front:  'Look straight ahead at the camera',
-  right:  'Turn head to the right',
-  left:   'Turn head to the left',
+  right:  'Student turns to THEIR right',
+  left:   'Student turns to THEIR left',
   up:     'Tilt head slightly upward',
   down:   'Tilt head slightly downward'
 };
+// Placed where the face ends up on screen, not where the word points: a student
+// turning to their own right moves toward the left of an unmirrored picture.
+// Mirroring the view flips that back, handled in setAngle.
 const ARROW_CONFIG = {
   front:  { t:'',  top:'50%', left:'50%' },
-  right:  { t:'→', top:'50%', left:'78%' },
-  left:   { t:'←', top:'50%', left:'18%' },
+  right:  { t:'←', top:'50%', left:'18%' },
+  left:   { t:'→', top:'50%', left:'78%' },
   up:     { t:'↑', top:'12%', left:'50%' },
   down:   { t:'↓', top:'82%', left:'50%' }
 };
@@ -37,6 +40,7 @@ async function init() {
   // or a stalled request leaves the whole dashboard dead.
   try { await loadStudents(); } catch (e) { console.error('loadStudents failed:', e); }
   setupListeners();   // Always runs — no dependency on camera APIs
+  loadMirrorSetting();
   initWebcam();       // Best-effort, errors are caught internally
 }
 
@@ -190,9 +194,11 @@ function setAngle(idx) {
   $('angleTagOverlay').textContent  = ANGLE_LABELS[angle].toUpperCase();
   $('captureInstruction').textContent = ANGLE_INSTR[angle];
   const arrow = $('angleArrow');
-  arrow.textContent  = cfg.t;
+  // A mirrored view reverses left and right on screen, so the arrow follows.
+  const flip = mirrorOn && activeSource() === 'webcam';
+  arrow.textContent  = flip ? (cfg.t === '←' ? '→' : cfg.t === '→' ? '←' : cfg.t) : cfg.t;
   arrow.style.top    = cfg.top;
-  arrow.style.left   = cfg.left;
+  arrow.style.left   = flip ? `${100 - parseFloat(cfg.left)}%` : cfg.left;
   arrow.style.transform = 'translate(-50%,-50%)';
   const s = selectedStudentId ? allStudents.find(s=>s.id===selectedStudentId) : null;
   const captured = s?.capturedAngles || [];
@@ -450,6 +456,34 @@ function laplacianScore(video, size) {
   } catch { return 999; }
 }
 
+// ── Mirror ─────────────────────────────────────────────────────────────────────
+// Some laptop webcams hand back an already-mirrored picture and some do not,
+// and nothing in the stream says which. So this is a switch the operator sets
+// once by looking at the screen. It flips the preview and the saved photo
+// together, and never touches the phone, whose rear camera is never mirrored.
+let mirrorOn = false;
+
+function loadMirrorSetting() {
+  try { mirrorOn = localStorage.getItem('photobooth.mirror') === '1'; } catch { mirrorOn = false; }
+  applyMirror();
+}
+
+function toggleMirror() {
+  mirrorOn = !mirrorOn;
+  try { localStorage.setItem('photobooth.mirror', mirrorOn ? '1' : '0'); } catch {}
+  applyMirror();
+  setAngle(currentAngleIdx);   // the arrow swaps sides with the view
+}
+
+function applyMirror() {
+  $('webcamFeed').classList.toggle('mirrored', mirrorOn);
+  const btn = $('btnMirror');
+  if (btn) {
+    btn.classList.toggle('active', mirrorOn);
+    btn.title = mirrorOn ? 'Mirror is on - click to turn off' : 'Mirror is off - click to turn on';
+  }
+}
+
 // ── Capture ────────────────────────────────────────────────────────────────────
 
 // The viewfinder is a 3:4 portrait box and the video fills it with "cover", so
@@ -503,7 +537,10 @@ async function captureFromWebcam() {
   const crop = cropToViewfinder(video.videoWidth, video.videoHeight);
   const canvas=$('captureCanvas');
   canvas.width=crop.w; canvas.height=crop.h;
-  canvas.getContext('2d').drawImage(video, crop.x, crop.y, crop.w, crop.h, 0, 0, crop.w, crop.h);
+  const ctx = canvas.getContext('2d');
+  if (mirrorOn) { ctx.translate(crop.w, 0); ctx.scale(-1, 1); }   // save what is shown
+  ctx.drawImage(video, crop.x, crop.y, crop.w, crop.h, 0, 0, crop.w, crop.h);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   canvas.toBlob(async blob => {
     if (!blob) { isCapturing=false; renderSource(); showToast('Capture failed','error'); return; }
     const form=new FormData();
@@ -566,6 +603,9 @@ function setupListeners() {
 
   // Webcam connect (click on the no-webcam area)
   $('noWebcam').addEventListener('click', () => startWebcam());
+
+  // Mirror the webcam view
+  $('btnMirror').addEventListener('click', () => toggleMirror());
 
   // Capture button
   $('btnCapture').addEventListener('click', () => handleCapture());
