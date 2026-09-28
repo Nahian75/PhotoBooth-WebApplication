@@ -37,6 +37,7 @@ async function startCamera() {
       },
       audio: false
     });
+    await maximiseResolution(videoStream);
     hideCameraError();
     $('videoFeed').srcObject = videoStream;
     await $('videoFeed').play();
@@ -70,6 +71,23 @@ function hideCameraError() {
 function announceReady() {
   socket.emit('camera-ready');
   syncPreview();
+}
+
+// "ideal" is only a hint, so ask the camera what it can really do and request
+// that, rather than accepting whatever mode the driver defaulted to.
+async function maximiseResolution(stream) {
+  const track = stream.getVideoTracks()[0];
+  if (!track || !track.getCapabilities) return;
+  try {
+    const caps = track.getCapabilities();
+    const now  = track.getSettings();
+    if (!caps.width || !caps.height) return;
+    if (now.width >= caps.width.max && now.height >= caps.height.max) return;
+    await track.applyConstraints({
+      width:  { ideal: caps.width.max },
+      height: { ideal: caps.height.max }
+    });
+  } catch (e) { console.warn('Could not raise camera resolution:', e); }
 }
 
 // Only stream while the camera screen is actually on-screen. A hidden video

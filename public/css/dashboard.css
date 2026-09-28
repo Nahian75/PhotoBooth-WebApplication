@@ -284,6 +284,13 @@ html, body {
 /* Only the PC webcam is ever mirrored; a phone's rear camera never is. */
 #webcamFeed.mirrored { transform: scaleX(-1); }
 
+.res-label {
+  font-size: 11px; font-weight: 600; color: var(--gray-400);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+/* Under 2 MP is low for an ID photo, so make that visible rather than silent. */
+.res-label.low { color: var(--amber); }
+
 .btn-mirror {
   padding: 3px 10px; border-radius: 99px;
   background: var(--gray-50); border: var(--border);

@@ -346,9 +346,12 @@ async function startWebcam(deviceId) {
       audio: false
     };
     webcamStream = await mediaDevices.getUserMedia(constraints);
+    await maximiseResolution(webcamStream);
     const video = $('webcamFeed');
     video.srcObject = webcamStream;
     await video.play();
+    showResolution();
+    video.onresize = showResolution;   // fires if the camera switches mode
     // Re-enumerate to get labels after permission granted
     const devices = await mediaDevices.enumerateDevices();
     webcamDevices = devices.filter(d=>d.kind==='videoinput');
@@ -363,6 +366,38 @@ async function startWebcam(deviceId) {
     showToast(msg, 'warn');
     stopWebcam();
   }
+}
+
+// A "width: ideal" constraint is only a hint, and some webcam drivers settle on
+// a lower mode anyway — a 1080p camera handing back 720p, for example. Ask the
+// track what it is actually capable of and request that.
+async function maximiseResolution(stream) {
+  const track = stream.getVideoTracks()[0];
+  if (!track || !track.getCapabilities) return;
+  try {
+    const caps = track.getCapabilities();
+    const now  = track.getSettings();
+    if (!caps.width || !caps.height) return;
+    if (now.width >= caps.width.max && now.height >= caps.height.max) return;
+    await track.applyConstraints({
+      width:  { ideal: caps.width.max },
+      height: { ideal: caps.height.max }
+    });
+  } catch (e) { console.warn('Could not raise camera resolution:', e); }
+}
+
+// Shows what the camera is really giving, and what a photo will come out as
+// after the 3:4 crop. Without this a low-resolution camera goes unnoticed.
+function showResolution() {
+  const el = $('resLabel');
+  if (!el) return;
+  const v = $('webcamFeed');
+  if (!webcamActive || !v.videoWidth) { el.textContent = ''; el.title = ''; return; }
+  const crop = cropToViewfinder(v.videoWidth, v.videoHeight);
+  const mp = (crop.w * crop.h / 1e6).toFixed(1);
+  el.textContent = `${crop.w}×${crop.h}`;
+  el.classList.toggle('low', crop.w * crop.h < 2e6);
+  el.title = `Camera gives ${v.videoWidth}×${v.videoHeight}. Saved photo is ${crop.w}×${crop.h} (${mp} MP) after cropping to the viewfinder.`;
 }
 
 function stopWebcam() {
