@@ -197,6 +197,20 @@ function laplacian(video,size){
 }
 
 // ── Capture ───────────────────────────────────────────────────
+
+// Same 3:4 portrait crop the dashboard uses, so photos come out the same shape
+// whichever camera took them. A phone sensor is already 3:4 and is unaffected.
+const CAPTURE_ASPECT = 3 / 4;
+
+function cropToViewfinder(w, h) {
+  if (w / h > CAPTURE_ASPECT) {
+    const cw = Math.round(h * CAPTURE_ASPECT);
+    return { x: Math.round((w - cw) / 2), y: 0, w: cw, h };
+  }
+  const ch = Math.round(w / CAPTURE_ASPECT);
+  return { x: 0, y: Math.round((h - ch) / 2), w, h: ch };
+}
+
 async function capture(angleOverride) {
   if(isCapturing||!videoStream||!currentStudent) return;
   const video=$('videoFeed');
@@ -218,8 +232,9 @@ async function capture(angleOverride) {
 
   // Full-res canvas capture
   const canvas=$('captureCanvas');
-  canvas.width=video.videoWidth; canvas.height=video.videoHeight;
-  canvas.getContext('2d').drawImage(video,0,0,video.videoWidth,video.videoHeight);
+  const crop=cropToViewfinder(video.videoWidth,video.videoHeight);
+  canvas.width=crop.w; canvas.height=crop.h;
+  canvas.getContext('2d').drawImage(video,crop.x,crop.y,crop.w,crop.h,0,0,crop.w,crop.h);
 
   canvas.toBlob(async blob=>{
     if(!blob){ isCapturing=false; $('captureBtn').disabled=false; return; }

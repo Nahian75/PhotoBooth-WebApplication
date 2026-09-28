@@ -451,6 +451,22 @@ function laplacianScore(video, size) {
 }
 
 // ── Capture ────────────────────────────────────────────────────────────────────
+
+// The viewfinder is a 3:4 portrait box and the video fills it with "cover", so
+// a wide camera is shown cropped. Save the same crop, or the photo would be a
+// wide shot that looks nothing like what the operator framed. A phone camera is
+// already 3:4, so this leaves it untouched.
+const CAPTURE_ASPECT = 3 / 4;
+
+function cropToViewfinder(w, h) {
+  if (w / h > CAPTURE_ASPECT) {          // wider than the box: trim the sides
+    const cw = Math.round(h * CAPTURE_ASPECT);
+    return { x: Math.round((w - cw) / 2), y: 0, w: cw, h };
+  }
+  const ch = Math.round(w / CAPTURE_ASPECT);   // taller: trim top and bottom
+  return { x: 0, y: Math.round((h - ch) / 2), w, h: ch };
+}
+
 function handleCapture() {
   const src = activeSource();
   if (src==='phone') requestPhoneCapture();
@@ -484,10 +500,10 @@ async function captureFromWebcam() {
   const flash = $('captureFlash');
   flash.classList.add('flash');
   setTimeout(()=>flash.classList.remove('flash'), 150);
-  const vw=video.videoWidth, vh=video.videoHeight;
+  const crop = cropToViewfinder(video.videoWidth, video.videoHeight);
   const canvas=$('captureCanvas');
-  canvas.width=vw; canvas.height=vh;
-  canvas.getContext('2d').drawImage(video,0,0,vw,vh);
+  canvas.width=crop.w; canvas.height=crop.h;
+  canvas.getContext('2d').drawImage(video, crop.x, crop.y, crop.w, crop.h, 0, 0, crop.w, crop.h);
   canvas.toBlob(async blob => {
     if (!blob) { isCapturing=false; renderSource(); showToast('Capture failed','error'); return; }
     const form=new FormData();
